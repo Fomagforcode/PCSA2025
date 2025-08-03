@@ -1,0 +1,3 @@
+// Replace these values with your actual Supabase credentials
+export const SUPABASE_URL = "https://cnhxgrlexzovtufeeqzd.supabase.co"
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuaHhncmxleHpvdnR1ZmVlcXpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMzY0NjksImV4cCI6MjA2ODgxMjQ2OX0.Ju6DftMJecopA_enuuu-_cqDLNF5D50tZnB4WUxCxkY"
