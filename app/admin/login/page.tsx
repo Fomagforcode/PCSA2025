@@ -46,6 +46,9 @@ export default function AdminLoginPage() {
       })
       return
     }
+    
+    // Normalize username by replacing spaces with underscores
+    const normalizedUsername = formData.username.toLowerCase().replace(/\s+/g, '_')
 
     setIsLoading(true)
     setError("")
@@ -55,7 +58,10 @@ export default function AdminLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          username: normalizedUsername // Use the normalized username
+        }),
       })
       if (!res.ok) {
         const data = await res.json()
