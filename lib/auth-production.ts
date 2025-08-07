@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import bcrypt from "bcryptjs"
 
 export interface AdminUser {
@@ -18,7 +18,7 @@ export async function authenticateAdminProduction(
   username: string,
   password: string,
 ): Promise<AdminUser | null> {
-  const supabase = createClient()
+  // Using the pre-configured supabase client
 
   try {
     // Get field office
@@ -81,7 +81,7 @@ export async function createAdminUser(
   fieldOfficeId: number,
   isMainAdmin = false,
 ): Promise<boolean> {
-  const supabase = createClient()
+  // Using the pre-configured supabase client
 
   try {
     const hashedPassword = await hashPassword(password)
