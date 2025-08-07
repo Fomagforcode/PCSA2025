@@ -5,6 +5,25 @@ const nextConfig = {
   },
   reactStrictMode: true,
   async headers() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Base CSP configuration
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cnhxgrlexzovtufeeqzd.supabase.co",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://cnhxgrlexzovtufeeqzd.supabase.co",
+      "frame-src 'self' https://cnhxgrlexzovtufeeqzd.supabase.co",
+      "form-action 'self'",
+      "base-uri 'self'",
+      "object-src 'none'"
+    ];
+
+    // Add nonce for production
+    const csp = cspDirectives.join('; ');
+
     return [
       {
         // apply to all routes
@@ -16,10 +35,7 @@ const nextConfig = {
           { key: "X-XSS-Protection", value: "1; mode=block" },
           {
             key: "Content-Security-Policy",
-            value:
-              process.env.NODE_ENV === "production"
-                ? "default-src 'self'; img-src 'self' data: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co"
-                : "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co",
+            value: csp
           },
           {
             key: "Strict-Transport-Security",
