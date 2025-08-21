@@ -43,17 +43,36 @@ A secure and scalable registration system built with modern web technologies.
    ```bash
    npm install
    ```
-3. Set up environment variables (create `.env.local` file):
+3. Set up environment variables (copy `.env.example` to `.env.local` and fill in your values):
+   ```bash
+   cp .env.example .env.local
    ```
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   JWT_SECRET=your_jwt_secret
-   ```
+   Then edit `.env.local` with your actual Supabase credentials.
 
 4. Run the development server:
    ```bash
    npm run dev
    ```
+
+## 🚀 Deployment
+
+### Vercel Deployment
+1. Connect your GitHub repository to Vercel
+2. **Important**: Add environment variables in Vercel dashboard:
+   - Go to Project Settings → Environment Variables
+   - Add the following variables:
+     ```
+     NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+     JWT_SECRET=your_jwt_secret
+     ```
+3. Deploy from main branch
+
+### Getting Supabase Credentials
+1. Go to your Supabase project dashboard
+2. Navigate to Settings → API
+3. Copy the "Project URL" and "anon public" key
+4. Generate a secure JWT secret (any random string)
 
 ## 🔒 Security Features
 - JWT-based authentication
