@@ -150,6 +150,15 @@ export function GroupRegistration({ fieldOfficeId, isMainAdmin = false }: GroupR
   }
 
   const handleDelete = async (id: number) => {
+    const reg = registrations.find((r) => r.id === id)
+    if (reg && reg.status === "pending") {
+      toast({
+        title: "Cannot delete pending registration",
+        description: "Please approve or reject before deleting.",
+        variant: "destructive",
+      })
+      return
+    }
     if (!confirm("Are you sure you want to delete this group registration and all its participants?")) return
 
     try {
@@ -715,8 +724,19 @@ export function GroupRegistration({ fieldOfficeId, isMainAdmin = false }: GroupR
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(registration.id)}
-                            className="text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              if (registration.status === "pending") {
+                                toast({
+                                  title: "Cannot delete pending registration",
+                                  description: "Please approve or reject before deleting.",
+                                  variant: "destructive",
+                                })
+                                return
+                              }
+                              handleDelete(registration.id)
+                            }}
+                            disabled={registration.status === "pending"}
+                            className="text-red-600 hover:text-red-700 disabled:opacity-50"
                           >
                             <XCircle className="h-4 w-4" />
                           </Button>

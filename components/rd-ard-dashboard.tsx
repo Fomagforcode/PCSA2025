@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -172,9 +173,13 @@ export function RdArdDashboard() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg">
-                <Monitor className="h-6 w-6 text-white" />
-              </div>
+              <Image
+                src="/csc-logo.png"
+                alt="CSC Logo"
+                width={48}
+                height={48}
+                className="rounded-lg shadow-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">RD/ARD Monitoring Dashboard</h1>
                 <div className="flex items-center gap-3 mt-1">
@@ -186,7 +191,15 @@ export function RdArdDashboard() {
                 </div>
               </div>
             </div>
-
+            <div className="flex-1 flex justify-center">
+              <Image
+                src="/125th%20PCSA%20logo.png"
+                alt="125th PCSA Logo"
+                width={240}
+                height={80}
+                className="h-16 w-60 object-contain"
+              />
+            </div>
             <div className="flex items-center gap-4">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-medium text-gray-900">{admin?.name || 'RD/ARD Monitor'}</p>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,7 @@ import {
   deleteRegistration,
   type IndividualRegistrationWithOffice,
 } from "@/lib/registrations"
+import { useRealtime } from "@/hooks/use-realtime"
 
 interface IndividualRegistrationsProps {
   fieldOfficeId: number
@@ -49,7 +50,7 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
   const [orNumber, setOrNumber] = useState("")
   const [pendingApproveId, setPendingApproveId] = useState<number | null>(null)
 
-  const loadRegistrations = async () => {
+  const loadRegistrations = useCallback(async () => {
     try {
       setLoading(true)
       const data = await getIndividualRegistrations(isMainAdmin ? undefined : fieldOfficeId)
@@ -65,7 +66,13 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
     } finally {
       setLoading(false)
     }
-  }
+  }, [fieldOfficeId, isMainAdmin, toast])
+
+  // Use realtime updates to refresh data when status changes
+  useRealtime({
+    table: "individual_registrations",
+    callback: loadRegistrations,
+  })
 
   useEffect(() => {
     loadRegistrations()
@@ -162,6 +169,15 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
   }
 
   const handleDelete = async (id: number) => {
+    const reg = registrations.find((r) => r.id === id)
+    if (reg && reg.status === "pending") {
+      toast({
+        title: "Cannot delete pending registration",
+        description: "Please approve or reject before deleting.",
+        variant: "destructive",
+      })
+      return
+    }
     if (!confirm("Are you sure you want to delete this registration?")) return
 
     try {
@@ -501,8 +517,19 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(registration.id)}
-                            className="text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              if (registration.status === "pending") {
+                                toast({
+                                  title: "Cannot delete pending registration",
+                                  description: "Please approve or reject before deleting.",
+                                  variant: "destructive",
+                                })
+                                return
+                              }
+                              handleDelete(registration.id)
+                            }}
+                            disabled={registration.status === "pending"}
+                            className="text-red-600 hover:text-red-700 disabled:opacity-50"
                           >
                             <XCircle className="h-4 w-4" />
                           </Button>

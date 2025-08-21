@@ -20,8 +20,24 @@ interface ParticipantMasterListProps {
 }
 
 function formatName(name: string) {
+  // Remove any leading numbers, periods, or whitespace then trim
   const cleaned = name.replace(/^[\d\.\s]+/, "").trim()
-  return cleaned.toUpperCase()
+  if (!cleaned) return ""
+
+  // Split into parts and move surname (last part) to the front
+  const parts = cleaned.split(/\s+/)
+  if (parts.length === 1) {
+    return cleaned.toUpperCase()
+  }
+  const surname = parts.pop() as string // pop always returns a string here since length > 1
+  const rearranged = `${surname} ${parts.join(" ")}`
+  return rearranged.toUpperCase()
+}
+
+function extractSurname(name: string) {
+  const cleaned = name.replace(/^[\d\.\s]+/, "").trim()
+  const parts = cleaned.split(/\s+/)
+  return parts[parts.length - 1] // Last part is surname
 }
 
 export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListProps) {
@@ -116,11 +132,13 @@ export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListPr
     return matchesSearch && matchesType
   })
 
-  const sorted = [...filtered].sort((a, b) =>
-    nameSort === "asc"
-      ? a.full_name.localeCompare(b.full_name)
-      : b.full_name.localeCompare(a.full_name)
-  )
+  const sorted = [...filtered].sort((a, b) => {
+    const surnameA = extractSurname(a.full_name)
+    const surnameB = extractSurname(b.full_name)
+    return nameSort === "asc"
+      ? surnameA.localeCompare(surnameB)
+      : surnameB.localeCompare(surnameA)
+  })
 
   return (
     <Card>
@@ -155,8 +173,8 @@ export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListPr
               onChange={(e) => setNameSort(e.target.value as any)}
               className="border border-input h-10 rounded px-2 text-sm bg-transparent"
             >
-              <option value="asc">Name A → Z</option>
-              <option value="desc">Name Z → A</option>
+              <option value="asc">Surname A → Z</option>
+              <option value="desc">Surname Z → A</option>
             </select>
           </div>
           <div>

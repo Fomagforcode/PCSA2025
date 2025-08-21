@@ -628,9 +628,20 @@ export async function updateRegistrationStatus(
     const updatePayload: Record<string, any> = { status }
     if (status === "approved") updatePayload.or_number = or_number
 
-    const { error } = await supabase.from(table).update(updatePayload).eq("id", id)
+    const { data, error } = await supabase
+      .from(table)
+      .update(updatePayload)
+      .eq("id", id)
+      .select("*")
+      .single()
 
     if (error) throw error
+    
+    // Check if any rows were actually updated
+    if (!data) {
+      console.error("No rows updated - RLS policy may be blocking the update")
+      throw new Error("Update blocked by database policy")
+    }
 
     // If approving a group registration, propagate OR number to its participants
     if (type === "group" && status === "approved" && or_number) {
