@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { Users, UserPlus, LogOut, Clock, Shield, Building2, BarChart3, ChevronsUpDown } from "lucide-react"
+import { Users, UserPlus, LogOut, Clock, Shield, BarChart3, ChevronsUpDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { GroupRegistration } from "@/components/group-registration"
 import { IndividualRegistrations } from "@/components/individual-registrations"
@@ -48,6 +49,17 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
     fieldOfficeColors[admin.fieldOffice as keyof typeof fieldOfficeColors] || "from-gray-500 to-gray-600"
   const loginTime = new Date().toLocaleString()
 
+  // Simplified debug log to avoid duplicate keys error
+  console.log('AdminDashboard render:', {
+    admin,
+    activeTab,
+    isMainAdmin: isMainAdmin(admin)
+  });
+
+  console.log('Is Main Admin?', isMainAdmin(admin));
+  console.log('Field Office ID:', admin.fieldOfficeId);
+  console.log('Field Office Name:', admin.fieldOffice);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Enhanced Header */}
@@ -55,15 +67,13 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div
-                className={`w-12 h-12 bg-gradient-to-r ${officeColor} rounded-lg flex items-center justify-center shadow-lg`}
-              >
-                {isMainAdmin(admin) ? (
-                  <Shield className="h-6 w-6 text-white" />
-                ) : (
-                  <Building2 className="h-6 w-6 text-white" />
-                )}
-              </div>
+              <Image
+                src="/csc-logo.png"
+                alt="CSC Logo"
+                width={48}
+                height={48}
+                className="rounded-lg shadow-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   {isMainAdmin(admin) ? "Main Admin Dashboard" : "Field Office Dashboard"}
@@ -79,7 +89,15 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
                 </div>
               </div>
             </div>
-
+            <div className="flex-1 flex justify-center">
+              <Image
+                src="/125th%20PCSA%20logo.png"
+                alt="125th PCSA Logo"
+                width={240}
+                height={80}
+                className="h-16 w-60 object-contain"
+              />
+            </div>
             <div className="flex items-center gap-4">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-medium text-gray-900">{admin.name}</p>
@@ -107,7 +125,10 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
         </div>
       </header>
 
-      <div className="p-6">
+      <div
+        className="p-6 bg-cover bg-center"
+        style={{ backgroundImage: "url('/125th%20PCSA%20background.png')" }}
+      >
         {isMainAdmin(admin) ? (
           <div className="max-w-7xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -146,7 +167,7 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
 
               <TabsContent value="overview" className="animate-fade-in">
                 {isMainAdmin(admin) ? (
-                  <MainAdminView />
+                  <MainAdminView fieldOfficeId={admin.fieldOfficeId} isMainAdmin={isMainAdmin(admin)} />
                 ) : (
                   <div className="space-y-6">
                       <LiveStats fieldOfficeId={admin.fieldOfficeId} />

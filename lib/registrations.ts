@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { uploadFile } from "./file-upload"
 
 export interface IndividualRegistration {
@@ -300,29 +301,39 @@ export async function submitIndividualRegistration(data: IndividualRegistrationD
       receiptUrl = await uploadFile(data.receiptFile, "receipts", `individual/${fieldOfficeId}`)
     }
 
-    // Insert registration data
-    const { data: registration, error } = await supabase
-      .from("individual_registrations")
-      .insert({
-        full_name: data.fullName,
-        age: data.age,
-        gender: data.gender,
-        contact_number: data.contactNumber,
-        address: data.address,
-        email_address: data.emailAddress,
-        field_office_id: fieldOfficeId,
-        receipt_url: receiptUrl,
-        status: "pending",
-      })
-      .select()
-      .single()
+    // Use RPC function for secure registration
+    const { error } = await supabase.rpc('register_individual', {
+      p_full_name: data.fullName,
+      p_age: data.age,
+      p_gender: data.gender,
+      p_field_office_id: fieldOfficeId,
+      p_contact: data.contactNumber,
+      p_email: data.emailAddress,
+      p_address: data.address,
+      p_or_number: null
+    })
 
     if (error) {
       console.error("Registration error:", error)
       throw new Error(`Registration failed: ${error.message}`)
     }
 
-    return { success: true, data: registration }
+    // If we need to update with receipt URL, do it separately
+    if (receiptUrl) {
+      const { error: updateError } = await supabase
+        .from("individual_registrations")
+        .update({ receipt_url: receiptUrl })
+        .eq("full_name", data.fullName)
+        .eq("field_office_id", fieldOfficeId)
+        .order("submitted_at", { ascending: false })
+        .limit(1)
+
+      if (updateError) {
+        console.warn("Could not update receipt URL:", updateError.message)
+      }
+    }
+
+    return { success: true, data: { message: "Registration submitted successfully" } }
   } catch (error) {
     console.error("Submit individual registration error:", error)
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
@@ -446,7 +457,7 @@ export async function getGroupRegistrations(fieldOfficeId?: number): Promise<Gro
       .from("group_registrations")
       .select(`
         *,
-        field_offices!inner(id, name, code)
+        field_offices(id, name, code)
       `)
       .order("submitted_at", { ascending: false })
 
@@ -495,17 +506,27 @@ export async function getGroupParticipants(groupRegistrationId: number): Promise
 }
 
 export async function getRegistrationStats(fieldOfficeId?: number): Promise<RegistrationStats> {
+  const logGroup = `getRegistrationStats (${fieldOfficeId || 'all'})`;
+  console.group(logGroup);
+  console.log('Fetching stats with fieldOfficeId:', fieldOfficeId);
+  
   try {
     // Build queries with field office filtering
     const buildIndividualQuery = () => {
       let query = supabase.from("individual_registrations").select("*", { count: "exact", head: true })
-      if (fieldOfficeId) query = query.eq("field_office_id", fieldOfficeId)
+      if (fieldOfficeId) {
+        console.log('Filtering individual registrations by field_office_id:', fieldOfficeId);
+        query = query.eq("field_office_id", fieldOfficeId)
+      }
       return query
     }
 
     const buildGroupQuery = () => {
       let query = supabase.from("group_registrations").select("*", { count: "exact", head: true })
-      if (fieldOfficeId) query = query.eq("field_office_id", fieldOfficeId)
+      if (fieldOfficeId) {
+        console.log('Filtering group registrations by field_office_id:', fieldOfficeId);
+        query = query.eq("field_office_id", fieldOfficeId)
+      }
       return query
     }
 
@@ -555,6 +576,7 @@ export async function getRegistrationStats(fieldOfficeId?: number): Promise<Regi
 
     const { count: totalParticipants } = await participantQuery
 
+    console.groupEnd();
     return {
       individual: {
         total: totalIndividual.count || 0,
@@ -579,6 +601,7 @@ export async function getRegistrationStats(fieldOfficeId?: number): Promise<Regi
     }
   } catch (error) {
     console.error("Error fetching registration stats:", error)
+    console.groupEnd();
     return {
       individual: { total: 0, pending: 0, approved: 0, rejected: 0 },
       group: { total: 0, pending: 0, approved: 0, rejected: 0, participants: 0 },

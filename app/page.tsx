@@ -102,14 +102,9 @@ export default function HomePage() {
                       <span className="text-gray-700">Receive instant confirmation</span>
                     </div>
                   </div>
-                  <Link href="/register">
-                    <Button
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg"
-                    >
-                      Register Now
-                    </Button>
-                  </Link>
+                  <Button asChild size="lg" className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg">
+                    <Link href="/register">Register Now</Link>
+                  </Button>
                 </CardContent>
               </Card>
 

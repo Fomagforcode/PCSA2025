@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     { expiresIn: "15m" },
   )
 
-  const response = NextResponse.json({ user: { name: user.name, role: user.role, fieldOffice: user.fieldOfficeName } })
+  const response = NextResponse.json({ user: { name: user.name, role: user.role, fieldOffice: user.fieldOfficeName, fieldOfficeId: user.fieldOfficeId } })
   response.cookies.set("authToken", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

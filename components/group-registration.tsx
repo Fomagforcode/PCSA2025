@@ -832,29 +832,30 @@ export function GroupRegistration({ fieldOfficeId, isMainAdmin = false }: GroupR
 
               <div className="border rounded-lg overflow-hidden">
                 <div className="bg-gray-50 px-4 py-2 border-b">
-                  <div className="grid grid-cols-6 gap-4 font-medium text-sm">
+                  <div className="grid grid-cols-5 gap-2 font-medium text-sm">
                     <span>Name</span>
                     <span>Age</span>
                     <span>Gender</span>
-<span>Email</span>
                     <span>OR #</span>
-                    <span>Registered</span>
+                    <span>Email</span>
                   </div>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {selectedRegistration.group_participants.map((participant, index) => (
                     <div key={participant.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-gray-50">
-                      <div className="grid grid-cols-6 gap-4 text-sm">
+                      <div className="grid grid-cols-5 gap-2 text-sm">
                         <span className="font-medium">{participant.full_name}</span>
                         <span>{participant.age}</span>
-                        <span>
-                          <Badge variant={participant.gender === "Male" ? "default" : "secondary"} className="text-xs">
+                        <span className="w-16">
+                          <Badge
+                            variant="default"
+                            className={`text-xs w-full justify-center ${participant.gender === 'Female' ? 'bg-pink-500 text-white' : ''}`}
+                          >
                             {participant.gender}
                           </Badge>
                         </span>
+                        <span>{participant.or_number ?? "—"}</span>
                         <span>{participant.email_address ?? "—"}</span>
-<span>{participant.or_number ?? "—"}</span>
-                        <span className="text-gray-500">{new Date(participant.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                   ))}

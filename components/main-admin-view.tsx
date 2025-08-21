@@ -92,51 +92,114 @@ export function MainAdminView({ fieldOfficeId, isMainAdmin = true }: MainAdminVi
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set())
   const { toast } = useToast()
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true)
+  useEffect(() => {
+    console.group('MainAdminView - Component Mounted');
+    console.log('Initial Props:', { fieldOfficeId, isMainAdmin });
+    console.groupEnd();
+    
+    return () => {
+      console.log('MainAdminView - Component Unmounted');
+    };
+  }, [fieldOfficeId, isMainAdmin]);
 
-      // Fetch overall stats and individual field office stats
+  const fetchData = useCallback(async () => {
+    const logGroup = `MainAdminView - fetchData (${new Date().toISOString()})`;
+    console.group(logGroup);
+    
+    try {
+      setLoading(true);
+
+      console.log('Props:', { 
+        fieldOfficeId, 
+        isMainAdmin,
+        shouldFilter: !isMainAdmin && fieldOfficeId !== undefined
+      });
+
+      const shouldFilter = !isMainAdmin && fieldOfficeId;
+      console.log('Should filter by field office?', shouldFilter, { isMainAdmin, fieldOfficeId });
+
+      const fetchFieldOfficeId = shouldFilter ? fieldOfficeId : undefined;
+
+      console.log('Fetching data with fieldOfficeId:', fetchFieldOfficeId);
+
+      console.time('Fetching registration data');
+
       const [overallData, individualData, groupData] = await Promise.all([
-        getRegistrationStats(), // Overall stats (no field office filter)
-        getIndividualRegistrations(), // All individual registrations
-        getGroupRegistrations(), // All group registrations
-      ])
+        getRegistrationStats(fetchFieldOfficeId),
+        getIndividualRegistrations(fetchFieldOfficeId),
+        getGroupRegistrations(fetchFieldOfficeId),
+      ]);
+
+      console.timeEnd('Fetching registration data');
+
+      console.log('Fetched data summary:', {
+        overallStats: overallData,
+        individualCount: individualData.length,
+        groupCount: groupData.length,
+        individualSample: individualData.slice(0, 2), 
+        groupSample: groupData.slice(0, 2), 
+      });
+
+      if (individualData.length > 0) {
+        const fieldOfficeIds = [...new Set(individualData.map(i => i.field_office_id))];
+        console.log('Field office IDs in individual data:', fieldOfficeIds);
+      }
+
+      if (groupData.length > 0) {
+        const fieldOfficeIds = [...new Set(groupData.map(g => g.field_office_id))];
+        console.log('Field office IDs in group data:', fieldOfficeIds);
+      }
 
       setOverallStats(overallData)
       setIndividualRegistrations(individualData)
       setGroupRegistrations(groupData)
 
-      // Calculate stats for each field office
-      const officeStats: FieldOfficeStats[] = await Promise.all(
-        fieldOffices.map(async (office) => {
-          const stats = await getRegistrationStats(office.id)
-          return {
+      if (isMainAdmin) {
+        const officeStats: FieldOfficeStats[] = []
+
+        for (const office of fieldOffices) {
+          try {
+            const stats = await getRegistrationStats(office.id)
+            officeStats.push({
+              id: office.id,
+              name: office.name,
+              code: office.code,
+              ...stats,
+            })
+          } catch (error) {
+            console.error(`Error fetching stats for office ${office.name}:`, error)
+          }
+        }
+
+        setFieldOfficeStats(officeStats)
+      } else if (fieldOfficeId) {
+        const office = fieldOffices.find(o => o.id === fieldOfficeId);
+        if (office) {
+          const stats = await getRegistrationStats(fieldOfficeId);
+          setFieldOfficeStats([{
             id: office.id,
             name: office.name,
             code: office.code,
             ...stats,
-          }
-        }),
-      )
-
-      setFieldOfficeStats(officeStats)
+          }]);
+        }
+      }
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error('Error in fetchData:', error);
       toast({
         title: "Error",
         description: "Failed to fetch registration data",
         variant: "destructive",
       })
     } finally {
+      console.groupEnd();
       setLoading(false)
     }
-  }, [toast])
+  }, [toast, isMainAdmin, fieldOfficeId])
 
   useEffect(() => {
     fetchData()
 
-    // Auto-refresh every 2 minutes
     const interval = setInterval(fetchData, 120000)
     return () => clearInterval(interval)
   }, [fetchData])

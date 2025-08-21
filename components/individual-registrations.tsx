@@ -257,7 +257,10 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div
+        className="space-y-6 bg-cover bg-center"
+        style={{ backgroundImage: "url('/125th%20PCSA%20background.png')" }}
+      >
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-center py-8">
@@ -271,7 +274,10 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
   }
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6 bg-cover bg-center"
+      style={{ backgroundImage: "url('/125th%20PCSA%20background.png')" }}
+    >
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card>
@@ -420,7 +426,10 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-semibold text-lg">{registration.full_name}</h3>
-                          <Badge variant={registration.gender === "Male" ? "default" : "secondary"}>
+                          <Badge
+                              variant="default"
+                              className={registration.gender === "Female" ? "bg-pink-500 text-white" : ""}
+                            >
                             {registration.gender}
                           </Badge>
                           <Badge variant="outline">Age {registration.age}</Badge>
@@ -532,6 +541,10 @@ export function IndividualRegistrations({ fieldOfficeId, isMainAdmin = false }: 
                 <div>
                   <label className="text-sm font-medium text-gray-700">Contact Number</label>
                   <p>{selectedRegistration.contact_number}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">OR #</label>
+                  <p>{selectedRegistration.or_number ?? "—"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Email Address</label>

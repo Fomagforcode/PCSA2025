@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
         name: data.user.name,
         role: data.user.role,
         fieldOfficeName: data.user.fieldOffice,
-        fieldOfficeId: 0,
+        fieldOfficeId: data.user.fieldOfficeId ?? 0,
         isMainAdmin: data.user.role === "main_admin",
       }
       storeAuth(user as any)
