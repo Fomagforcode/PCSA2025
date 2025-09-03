@@ -3,8 +3,9 @@
 
 ALTER TABLE individual_registrations DISABLE ROW LEVEL SECURITY;
 ALTER TABLE group_registrations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE group_participants DISABLE ROW LEVEL SECURITY;
 
 -- Verify RLS is disabled
 SELECT schemaname, tablename, rowsecurity 
 FROM pg_tables 
-WHERE tablename IN ('individual_registrations', 'group_registrations');
+WHERE tablename IN ('individual_registrations', 'group_registrations', 'group_participants');

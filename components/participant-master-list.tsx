@@ -24,6 +24,26 @@ function formatName(name: string) {
   const cleaned = name.replace(/^[\d\.\s]+/, "").trim()
   if (!cleaned) return ""
 
+  // Check if name is in "Surname, First Middle" format
+  if (cleaned.includes(',')) {
+    const [surname, firstMiddle] = cleaned.split(',').map(part => part.trim())
+    if (surname && firstMiddle) {
+      // Convert "Doe, john A." to "JOHN A. DOE" (all caps)
+      const properFirstMiddle = firstMiddle.split(' ')
+        .map(part => {
+          // Convert to uppercase
+          const formatted = part.toUpperCase()
+          // Add dot to single letters (middle initials) that don't have one
+          if (formatted.length === 1 || (formatted.length === 2 && !formatted.endsWith('.'))) {
+            return formatted.length === 1 ? formatted + '.' : formatted
+          }
+          return formatted
+        })
+        .join(' ')
+      return `${properFirstMiddle} ${surname.toUpperCase()}`
+    }
+  }
+
   // Split into parts and move surname (last part) to the front
   const parts = cleaned.split(/\s+/)
   if (parts.length === 1) {
@@ -109,11 +129,14 @@ export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListPr
     try {
       let data: Participant[] = []
       if (fieldOfficeId !== undefined) {
+        console.log("Fetching participants for field office:", fieldOfficeId)
         data = await getAllParticipants(fieldOfficeId)
       } else {
+        console.log("Fetching all participants across all field offices")
         // @ts-ignore - function will be added in registrations.ts
         data = await getAllParticipantsAll()
       }
+      console.log("Fetched participant count:", data.length)
       setParticipants(data)
     } catch (error) {
       console.error("Error fetching participants", error)

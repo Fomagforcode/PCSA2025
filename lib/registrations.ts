@@ -179,6 +179,7 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
       .from("individual_registrations")
       .select("id, full_name, age, gender, status, or_number")
       .eq("field_office_id", fieldOfficeId)
+      .limit(10000)
 
     if (indErr) {
       console.error("Error fetching individual participants", indErr)
@@ -214,6 +215,7 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
         .from("group_participants")
         .select("id, full_name, age, gender, or_number")
         .in("group_registration_id", groupRegIds)
+        .limit(10000)
 
       if (grpPartErr) {
         console.error("Error fetching group participants", grpPartErr)
@@ -241,16 +243,31 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
 // Fetch all participants across all field offices (used by main admin master list)
 export async function getAllParticipantsAll(): Promise<Participant[]> {
   try {
-    // Individual registrations (no filter)
-    const { data: individuals, error: indErr } = await supabase
-      .from("individual_registrations")
-      .select("id, full_name, age, gender, status, or_number")
+    // Individual registrations (no filter) - use pagination to get all records
+    let allIndividuals: any[] = []
+    let from = 0
+    const batchSize = 1000
+    
+    while (true) {
+      const { data: individuals, error: indErr } = await supabase
+        .from("individual_registrations")
+        .select("id, full_name, age, gender, status, or_number")
+        .range(from, from + batchSize - 1)
 
-    if (indErr) {
-      console.error("Error fetching individual participants", indErr)
+      if (indErr) {
+        console.error("Error fetching individual participants", indErr)
+        break
+      }
+
+      if (!individuals || individuals.length === 0) break
+      
+      allIndividuals = [...allIndividuals, ...individuals]
+      
+      if (individuals.length < batchSize) break
+      from += batchSize
     }
 
-    const individualParticipants: Participant[] = (individuals || []).map((i) => ({
+    const individualParticipants: Participant[] = allIndividuals.map((i) => ({
       id: i.id,
       full_name: i.full_name,
       age: i.age,
@@ -260,16 +277,30 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
       or_number: i.or_number,
     }))
 
-    // Group participants
-    const { data: grpParts, error: grpErr } = await supabase
-      .from("group_participants")
-      .select("id, full_name, age, gender, or_number")
+    // Group participants - use pagination to get all records
+    let allGroupParticipants: any[] = []
+    from = 0
+    
+    while (true) {
+      const { data: grpParts, error: grpErr } = await supabase
+        .from("group_participants")
+        .select("id, full_name, age, gender, or_number")
+        .range(from, from + batchSize - 1)
 
-    if (grpErr) {
-      console.error("Error fetching group participants", grpErr)
+      if (grpErr) {
+        console.error("Error fetching group participants", grpErr)
+        break
+      }
+
+      if (!grpParts || grpParts.length === 0) break
+      
+      allGroupParticipants = [...allGroupParticipants, ...grpParts]
+      
+      if (grpParts.length < batchSize) break
+      from += batchSize
     }
 
-    const groupParticipants: Participant[] = (grpParts || []).map((g) => ({
+    const groupParticipants: Participant[] = allGroupParticipants.map((g) => ({
       id: g.id,
       full_name: g.full_name,
       age: g.age,
@@ -279,6 +310,10 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
       or_number: g.or_number,
     }))
 
+    console.log("Individual participants count:", individualParticipants.length)
+    console.log("Group participants count:", groupParticipants.length)
+    console.log("Total participants being returned:", individualParticipants.length + groupParticipants.length)
+    
     return [...individualParticipants, ...groupParticipants]
   } catch (error) {
     console.error("getAllParticipantsAll error", error)

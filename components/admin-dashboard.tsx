@@ -171,7 +171,7 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
                 ) : (
                   <div className="space-y-6">
                       <LiveStats fieldOfficeId={admin.fieldOfficeId} />
-                      <ParticipantMasterList fieldOfficeId={admin.fieldOfficeId} />
+                      <ParticipantMasterList />
                     </div>
                 )}
               </TabsContent>
@@ -224,7 +224,7 @@ export function AdminDashboard({ authData }: AdminDashboardProps) {
               <TabsContent value="overview" className="animate-fade-in">
                 <div className="space-y-6">
                       <LiveStats fieldOfficeId={admin.fieldOfficeId} />
-                      <ParticipantMasterList fieldOfficeId={admin.fieldOfficeId} />
+                      <ParticipantMasterList />
                     </div>
               </TabsContent>
 

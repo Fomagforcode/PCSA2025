@@ -138,7 +138,17 @@ export function GroupRegistration({ fieldOfficeId, isMainAdmin = false }: GroupR
     setUpdating(pendingApproveId)
     const success = await updateRegistrationStatus(pendingApproveId, "approved", "group", orNumber)
     if (success) {
-      setRegistrations((prev) => prev.map((reg) => (reg.id === pendingApproveId ? { ...reg, status: "approved", or_number: orNumber } : reg)))
+      // Update the registration status and OR number, and also update participants
+      setRegistrations((prev) => prev.map((reg) => 
+        reg.id === pendingApproveId 
+          ? { 
+              ...reg, 
+              status: "approved", 
+              or_number: orNumber,
+              group_participants: reg.group_participants?.map(p => ({ ...p, or_number: orNumber })) || []
+            } 
+          : reg
+      ))
       toast({ title: "Status updated", description: "Group registration approved" })
     } else {
       toast({ title: "Update failed", description: "Failed to update registration status", variant: "destructive" })
