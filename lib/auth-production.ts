@@ -33,15 +33,12 @@ export async function authenticateAdminProduction(
       return null
     }
 
-    // Type assertion to ensure fieldOffice has the expected structure
-    const typedFieldOffice = fieldOffice as { id: number; code: string; name: string }
-
     // Get admin user
     const { data: adminUser, error: userError } = await supabase
       .from("admin_users")
       .select("*")
       .eq("username", username)
-      .eq("field_office_id", typedFieldOffice.id)
+      .eq("field_office_id", fieldOffice.id)
       .single()
 
     if (userError || !adminUser) {
@@ -49,30 +46,21 @@ export async function authenticateAdminProduction(
       return null
     }
 
-    // Type assertion to ensure adminUser has the expected structure
-    const typedAdminUser = adminUser as { 
-      id: number; 
-      username: string; 
-      field_office_id: number; 
-      is_main_admin: boolean; 
-      password_hash: string 
-    }
-
     // Verify password with bcrypt
-    const isValidPassword = await bcrypt.compare(password, typedAdminUser.password_hash)
+    const isValidPassword = await bcrypt.compare(password, adminUser.password_hash)
     if (!isValidPassword) {
       console.error("Invalid password")
       return null
     }
 
     return {
-      id: typedAdminUser.id,
-      username: typedAdminUser.username,
-      field_office_id: typedAdminUser.field_office_id,
-      is_main_admin: typedAdminUser.is_main_admin,
+      id: adminUser.id,
+      username: adminUser.username,
+      field_office_id: adminUser.field_office_id,
+      is_main_admin: adminUser.is_main_admin,
       field_office: {
-        code: typedFieldOffice.code,
-        name: typedFieldOffice.name,
+        code: fieldOffice.code,
+        name: fieldOffice.name,
       },
     }
   } catch (error) {
@@ -98,17 +86,12 @@ export async function createAdminUser(
   try {
     const hashedPassword = await hashPassword(password)
 
-    // Create the insert data object
-    const insertData = {
-      username: username,
+    const { error } = await supabase.from("admin_users").insert({
+      username,
       password_hash: hashedPassword,
       field_office_id: fieldOfficeId,
       is_main_admin: isMainAdmin,
-    }
-
-    // Use explicit any casting to bypass TypeScript issues
-    const supabaseClient = supabase as any
-    const { error } = await supabaseClient.from("admin_users").insert(insertData)
+    })
 
     return !error
   } catch (error) {

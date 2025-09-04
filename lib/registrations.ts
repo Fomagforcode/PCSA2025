@@ -143,9 +143,7 @@ async function getFieldOfficeId(code: string): Promise<number | null> {
       return null
     }
 
-    // Type assertion to ensure data[0] has the expected structure
-    const typedData = data as { id: number }[]
-    return typedData[0].id
+    return data[0].id
   } catch (error) {
     console.error("Error in getFieldOfficeId:", error)
     return null
@@ -167,9 +165,7 @@ async function getFieldOfficeById(id: number): Promise<number | null> {
       return null
     }
 
-    // Type assertion to ensure data[0] has the expected structure
-    const typedData = data as { id: number }[]
-    return typedData[0].id
+    return data[0].id
   } catch (error) {
     console.error("Error in getFieldOfficeById:", error)
     return null
@@ -228,9 +224,7 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
     let groupParticipants: Participant[] = []
 
     if (groupRegs && groupRegs.length > 0) {
-      // Type assertion to ensure groupRegs has the expected structure
-      const typedGroupRegs = groupRegs as { id: number; agency_name: string }[]
-      const groupRegIds = typedGroupRegs.map((gr) => gr.id)
+      const groupRegIds = groupRegs.map((gr) => gr.id)
 
       // Fetch group participants with pagination
       let allGroupParticipants: any[] = []
@@ -257,7 +251,7 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
       }
 
       groupParticipants = allGroupParticipants.map((g) => {
-        const groupReg = typedGroupRegs.find(gr => gr.id === g.group_registration_id)
+        const groupReg = groupRegs.find(gr => gr.id === g.group_registration_id)
         return {
           id: g.id,
           full_name: g.full_name,
@@ -325,9 +319,6 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
       console.error("Error fetching all group registrations", allGroupRegsErr)
     }
 
-    // Type assertion for all group registrations
-    const typedAllGroupRegs = allGroupRegs as { id: number; agency_name: string }[]
-
     // Group participants - use pagination to get all records
     let allGroupParticipants: any[] = []
     from = 0
@@ -352,7 +343,7 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
     }
 
     const groupParticipants: Participant[] = allGroupParticipants.map((g) => {
-      const groupReg = typedAllGroupRegs?.find(gr => gr.id === g.group_registration_id)
+      const groupReg = allGroupRegs?.find(gr => gr.id === g.group_registration_id)
       return {
         id: g.id,
         full_name: g.full_name,
@@ -501,7 +492,7 @@ export async function submitGroupRegistration(data: GroupRegistrationData) {
          email_address: participant.email
       }))
 
-      const { error: participantsError } = await (supabase.from("group_participants") as any).insert(participantsData)
+      const { error: participantsError } = await supabase.from("group_participants").insert(participantsData)
 
       if (participantsError) {
         console.error("Participant insertion error:", participantsError)
@@ -651,9 +642,7 @@ export async function getRegistrationStats(fieldOfficeId?: number): Promise<Regi
         .eq("field_office_id", fieldOfficeId)
 
       if (groupRegs && groupRegs.length > 0) {
-        // Type assertion to ensure groupRegs has the expected structure
-        const typedGroupRegs = groupRegs as { id: number }[]
-        const groupIds = typedGroupRegs.map((g) => g.id)
+        const groupIds = groupRegs.map((g) => g.id)
         participantQuery = supabase
           .from("group_participants")
           .select("*", { count: "exact", head: true })
