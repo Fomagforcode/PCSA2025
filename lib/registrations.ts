@@ -48,6 +48,7 @@ export interface Participant {
   source: "individual" | "group"
   or_number?: string | null
   status?: "pending" | "approved" | "rejected"
+  agency_name?: string | null
 }
 
 export interface GroupParticipant {
@@ -174,18 +175,32 @@ async function getFieldOfficeById(id: number): Promise<number | null> {
 export async function getAllParticipants(fieldOfficeId: number): Promise<Participant[]> {
 
   try {
-    // Fetch individual registrations
-    const { data: individuals, error: indErr } = await supabase
-      .from("individual_registrations")
-      .select("id, full_name, age, gender, status, or_number")
-      .eq("field_office_id", fieldOfficeId)
-      .limit(10000)
+    // Fetch individual registrations with pagination
+    let allIndividuals: any[] = []
+    let from = 0
+    const batchSize = 1000
+    
+    while (true) {
+      const { data: individuals, error: indErr } = await supabase
+        .from("individual_registrations")
+        .select("id, full_name, age, gender, status, or_number")
+        .eq("field_office_id", fieldOfficeId)
+        .range(from, from + batchSize - 1)
 
-    if (indErr) {
-      console.error("Error fetching individual participants", indErr)
+      if (indErr) {
+        console.error("Error fetching individual participants", indErr)
+        break
+      }
+
+      if (!individuals || individuals.length === 0) break
+      
+      allIndividuals = [...allIndividuals, ...individuals]
+      
+      if (individuals.length < batchSize) break
+      from += batchSize
     }
 
-    const individualParticipants: Participant[] = (individuals || []).map((i) => ({
+    const individualParticipants: Participant[] = allIndividuals.map((i) => ({
       id: i.id,
       full_name: i.full_name,
       age: i.age,
@@ -193,12 +208,13 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
       source: "individual",
       status: i.status,
       or_number: i.or_number,
+      agency_name: null,
     }))
 
     // Fetch group registrations for this field office to ensure accurate participant filtering
     const { data: groupRegs, error: grpRegErr } = await supabase
       .from("group_registrations")
-      .select("id")
+      .select("id, agency_name")
       .eq("field_office_id", fieldOfficeId)
 
     if (grpRegErr) {
@@ -210,28 +226,44 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
     if (groupRegs && groupRegs.length > 0) {
       const groupRegIds = groupRegs.map((gr) => gr.id)
 
-      // Fetch participants that belong only to the retrieved group registration IDs
-      const { data: grpParts, error: grpPartErr } = await supabase
-        .from("group_participants")
-        .select("id, full_name, age, gender, or_number")
-        .in("group_registration_id", groupRegIds)
-        .limit(10000)
+      // Fetch group participants with pagination
+      let allGroupParticipants: any[] = []
+      from = 0
+      
+      while (true) {
+        const { data: grpParts, error: grpPartErr } = await supabase
+          .from("group_participants")
+          .select("id, full_name, age, gender, or_number")
+          .in("group_registration_id", groupRegIds)
+          .range(from, from + batchSize - 1)
 
-      if (grpPartErr) {
-        console.error("Error fetching group participants", grpPartErr)
+        if (grpPartErr) {
+          console.error("Error fetching group participants", grpPartErr)
+          break
+        }
+
+        if (!grpParts || grpParts.length === 0) break
+        
+        allGroupParticipants = [...allGroupParticipants, ...grpParts]
+        
+        if (grpParts.length < batchSize) break
+        from += batchSize
       }
 
-      groupParticipants = (grpParts || []).map((g) => ({
-        id: g.id,
-        full_name: g.full_name,
-        age: g.age,
-        gender: g.gender,
-        source: "group",
-        status: "approved", // group participants are considered approved alongside their parent registration
-        or_number: g.or_number,
-      }))
+      groupParticipants = allGroupParticipants.map((g) => {
+        const groupReg = groupRegs.find(gr => gr.id === g.group_registration_id)
+        return {
+          id: g.id,
+          full_name: g.full_name,
+          age: g.age,
+          gender: g.gender,
+          source: "group",
+          status: "approved", // group participants are considered approved alongside their parent registration
+          or_number: g.or_number,
+          agency_name: groupReg?.agency_name || null,
+        }
+      })
     }
-
 
     return [...individualParticipants, ...groupParticipants]
   } catch (error) {
@@ -275,7 +307,17 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
       source: "individual",
       status: i.status,
       or_number: i.or_number,
+      agency_name: null,
     }))
+
+    // Fetch all group registrations to get agency names
+    const { data: allGroupRegs, error: allGroupRegsErr } = await supabase
+      .from("group_registrations")
+      .select("id, agency_name")
+
+    if (allGroupRegsErr) {
+      console.error("Error fetching all group registrations", allGroupRegsErr)
+    }
 
     // Group participants - use pagination to get all records
     let allGroupParticipants: any[] = []
@@ -284,7 +326,7 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
     while (true) {
       const { data: grpParts, error: grpErr } = await supabase
         .from("group_participants")
-        .select("id, full_name, age, gender, or_number")
+        .select("id, full_name, age, gender, or_number, group_registration_id")
         .range(from, from + batchSize - 1)
 
       if (grpErr) {
@@ -300,15 +342,19 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
       from += batchSize
     }
 
-    const groupParticipants: Participant[] = allGroupParticipants.map((g) => ({
-      id: g.id,
-      full_name: g.full_name,
-      age: g.age,
-      gender: g.gender,
-      source: "group",
-      status: "approved",
-      or_number: g.or_number,
-    }))
+    const groupParticipants: Participant[] = allGroupParticipants.map((g) => {
+      const groupReg = allGroupRegs?.find(gr => gr.id === g.group_registration_id)
+      return {
+        id: g.id,
+        full_name: g.full_name,
+        age: g.age,
+        gender: g.gender,
+        source: "group",
+        status: "approved",
+        or_number: g.or_number,
+        agency_name: groupReg?.agency_name || null,
+      }
+    })
 
     console.log("Individual participants count:", individualParticipants.length)
     console.log("Group participants count:", groupParticipants.length)

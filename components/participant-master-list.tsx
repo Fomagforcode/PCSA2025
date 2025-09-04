@@ -56,8 +56,23 @@ function formatName(name: string) {
 
 function extractSurname(name: string) {
   const cleaned = name.replace(/^[\d\.\s]+/, "").trim()
+  if (!cleaned) return ""
+
+  // Check if name is in "Surname, First Middle" format
+  if (cleaned.includes(',')) {
+    const [surname] = cleaned.split(',').map(part => part.trim())
+    return surname.toUpperCase()
+  }
+
+  // For names like "First Middle Surname", extract the first word as surname
+  // This matches the formatName logic that moves surname to front
   const parts = cleaned.split(/\s+/)
-  return parts[parts.length - 1] // Last part is surname
+  if (parts.length === 1) {
+    return cleaned.toUpperCase()
+  }
+  
+  // Take the last part as surname (this is what formatName moves to front)
+  return parts[parts.length - 1].toUpperCase()
 }
 
 export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListProps) {
@@ -78,34 +93,46 @@ export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListPr
       // Attempt to fetch the provided template (should be placed under /public)
       let wb: XLSX.WorkBook
       try {
-        const res = await fetch("/Export Excel Template/Masters List Template Export.xlsx")
+        const res = await fetch("/Export Excel Template/Masterlist of Participants.xlsx")
         const buf = await res.arrayBuffer()
         wb = XLSX.read(buf, { type: "array" })
       } catch {
         // Fallback: create new workbook if template not found
         wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(
-          wb,
-          XLSX.utils.aoa_to_sheet([["ID", "Name", "Age", "Gender", "Source", "OR #", "Remarks"]]),
-          "Master List"
-        )
+        const headers = [["ID", "Name", "Age", "Gender", "Source", "Agency", "OR #", "Remarks"]]
+        const ws = XLSX.utils.aoa_to_sheet(headers)
+        XLSX.utils.book_append_sheet(wb, ws, "Master List")
       }
 
       // Use first sheet
       const sheetName = wb.SheetNames[0]
       const ws = wb.Sheets[sheetName]
 
-      // Starting row after headers (row 2 if template, row 2 for fallback)
+      // Find where to start adding data (look for existing data or start after row 1)
       let startRow = 2
-      // Find last used row
       if (ws["!ref"]) {
         const range = XLSX.utils.decode_range(ws["!ref"] as string)
-        startRow = range.e.r + 1
+        // Check if there's existing data beyond headers
+        let lastDataRow = 1
+        for (let row = 2; row <= range.e.r; row++) {
+          let hasData = false
+          for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
+            if (ws[cellAddress] && ws[cellAddress].v) {
+              hasData = true
+              break
+            }
+          }
+          if (hasData) {
+            lastDataRow = row
+          }
+        }
+        startRow = lastDataRow + 1
       }
 
-      // Add participant rows
-      const rows = sorted.map((p, idx) => [idx + 1, formatName(p.full_name), p.age, p.gender, p.source, p.or_number || "", p.status || ""])
-      XLSX.utils.sheet_add_aoa(ws, rows, { origin: `A${startRow + 1}` })
+      // Add participant rows (preserve template formatting)
+      const rows = sorted.map((p, idx) => [idx + 1, formatName(p.full_name), p.age, p.gender, p.source, p.agency_name || "", p.or_number || "", p.status || ""])
+      XLSX.utils.sheet_add_aoa(ws, rows, { origin: `A${startRow}` })
 
       const out = XLSX.write(wb, { bookType: "xlsx", type: "array" })
       const blob = new Blob([out], {
@@ -221,6 +248,7 @@ export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListPr
                   <TableHead>Age</TableHead>
                   <TableHead>Gender</TableHead>
                   <TableHead>Source</TableHead>
+                  <TableHead>Agency</TableHead>
                   <TableHead>OR #</TableHead>
                   <TableHead>Remarks</TableHead>
                 </TableRow>
@@ -233,13 +261,14 @@ export function ParticipantMasterList({ fieldOfficeId }: ParticipantMasterListPr
                     <TableCell>{p.age}</TableCell>
                     <TableCell className="capitalize">{p.gender}</TableCell>
                     <TableCell className="capitalize">{p.source}</TableCell>
+                    <TableCell>{p.agency_name || ""}</TableCell>
                     <TableCell>{p.or_number || ""}</TableCell>
                     <TableCell>{p.status === "approved" ? "Approved" : (p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : "")}</TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       No participants found.
                     </TableCell>
                   </TableRow>
