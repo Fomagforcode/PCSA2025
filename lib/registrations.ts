@@ -492,7 +492,7 @@ export async function submitGroupRegistration(data: GroupRegistrationData) {
          email_address: participant.email
       }))
 
-      const { error: participantsError } = await supabase.from("group_participants").insert(participantsData)
+      const { error: participantsError } = await (supabase.from("group_participants") as any).insert(participantsData)
 
       if (participantsError) {
         console.error("Participant insertion error:", participantsError)

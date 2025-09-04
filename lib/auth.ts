@@ -125,21 +125,30 @@ export async function authenticateAdmin(
       return null
     }
 
+    // Type assertion to ensure admin has the expected structure
+    const typedAdmin = admin as { 
+      id: number; 
+      username: string; 
+      password_hash: string;
+      is_main_admin: boolean;
+      field_offices: { id: number; code: string; name: string }
+    }
+
     // Verify hashed password
-    if (!bcrypt.compareSync(password, admin.password_hash)) {
+    if (!bcrypt.compareSync(password, typedAdmin.password_hash)) {
       return null
     }
 
-    const fieldOffice = admin.field_offices
+    const fieldOffice = typedAdmin.field_offices
     const adminUser: AdminUser = {
-      id: admin.id.toString(),
-      username: admin.username,
+      id: typedAdmin.id.toString(),
+      username: typedAdmin.username,
       fieldOffice: fieldOffice.code,
       fieldOfficeId: fieldOffice.id,
       fieldOfficeName: fieldOffice.name,
-      role: admin.is_main_admin ? "main_admin" : "field_admin",
-      name: admin.username.replace("admin_", "").replace("_", " ").toUpperCase() + " Admin",
-      isMainAdmin: admin.is_main_admin,
+      role: typedAdmin.is_main_admin ? "main_admin" : "field_admin",
+      name: typedAdmin.username.replace("admin_", "").replace("_", " ").toUpperCase() + " Admin",
+      isMainAdmin: typedAdmin.is_main_admin,
     }
 
     storeAuth(adminUser)
