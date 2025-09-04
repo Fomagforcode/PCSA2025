@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client"
+import { type Database } from "@/lib/supabase/database.types"
 import bcrypt from "bcryptjs"
 
 export interface AdminUser {
@@ -86,12 +87,14 @@ export async function createAdminUser(
   try {
     const hashedPassword = await hashPassword(password)
 
-    const { error } = await supabase.from("admin_users").insert({
+        const insertData: Database["public"]["Tables"]["admin_users"]["Insert"][] = [{
       username,
       password_hash: hashedPassword,
       field_office_id: fieldOfficeId,
       is_main_admin: isMainAdmin,
-    })
+    }]
+
+    const { error } = await supabase.from("admin_users").insert(insertData)
 
     return !error
   } catch (error) {
