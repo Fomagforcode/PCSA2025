@@ -26,7 +26,7 @@ export async function authenticateAdminProduction(
       .from("field_offices")
       .select("id, code, name")
       .eq("code", fieldOfficeCode)
-      .single()
+      .single() as { data: { id: number; code: string; name: string } | null; error: any }
 
     if (officeError || !fieldOffice) {
       console.error("Field office not found:", officeError)
