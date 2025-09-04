@@ -49,18 +49,27 @@ export async function authenticateAdminProduction(
       return null
     }
 
+    // Type assertion to ensure adminUser has the expected structure
+    const typedAdminUser = adminUser as { 
+      id: number; 
+      username: string; 
+      field_office_id: number; 
+      is_main_admin: boolean; 
+      password_hash: string 
+    }
+
     // Verify password with bcrypt
-    const isValidPassword = await bcrypt.compare(password, adminUser.password_hash)
+    const isValidPassword = await bcrypt.compare(password, typedAdminUser.password_hash)
     if (!isValidPassword) {
       console.error("Invalid password")
       return null
     }
 
     return {
-      id: adminUser.id,
-      username: adminUser.username,
-      field_office_id: adminUser.field_office_id,
-      is_main_admin: adminUser.is_main_admin,
+      id: typedAdminUser.id,
+      username: typedAdminUser.username,
+      field_office_id: typedAdminUser.field_office_id,
+      is_main_admin: typedAdminUser.is_main_admin,
       field_office: {
         code: typedFieldOffice.code,
         name: typedFieldOffice.name,
