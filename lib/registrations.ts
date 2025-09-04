@@ -143,7 +143,9 @@ async function getFieldOfficeId(code: string): Promise<number | null> {
       return null
     }
 
-    return data[0].id
+    // Type assertion to ensure data[0] has the expected structure
+    const typedData = data as { id: number }[]
+    return typedData[0].id
   } catch (error) {
     console.error("Error in getFieldOfficeId:", error)
     return null
@@ -165,7 +167,9 @@ async function getFieldOfficeById(id: number): Promise<number | null> {
       return null
     }
 
-    return data[0].id
+    // Type assertion to ensure data[0] has the expected structure
+    const typedData = data as { id: number }[]
+    return typedData[0].id
   } catch (error) {
     console.error("Error in getFieldOfficeById:", error)
     return null
