@@ -228,7 +228,9 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
     let groupParticipants: Participant[] = []
 
     if (groupRegs && groupRegs.length > 0) {
-      const groupRegIds = groupRegs.map((gr) => gr.id)
+      // Type assertion to ensure groupRegs has the expected structure
+      const typedGroupRegs = groupRegs as { id: number; agency_name: string }[]
+      const groupRegIds = typedGroupRegs.map((gr) => gr.id)
 
       // Fetch group participants with pagination
       let allGroupParticipants: any[] = []
@@ -646,7 +648,9 @@ export async function getRegistrationStats(fieldOfficeId?: number): Promise<Regi
         .eq("field_office_id", fieldOfficeId)
 
       if (groupRegs && groupRegs.length > 0) {
-        const groupIds = groupRegs.map((g) => g.id)
+        // Type assertion to ensure groupRegs has the expected structure
+        const typedGroupRegs = groupRegs as { id: number }[]
+        const groupIds = typedGroupRegs.map((g) => g.id)
         participantQuery = supabase
           .from("group_participants")
           .select("*", { count: "exact", head: true })
