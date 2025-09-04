@@ -257,7 +257,7 @@ export async function getAllParticipants(fieldOfficeId: number): Promise<Partici
       }
 
       groupParticipants = allGroupParticipants.map((g) => {
-        const groupReg = groupRegs.find(gr => gr.id === g.group_registration_id)
+        const groupReg = typedGroupRegs.find(gr => gr.id === g.group_registration_id)
         return {
           id: g.id,
           full_name: g.full_name,
