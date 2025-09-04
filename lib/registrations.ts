@@ -325,6 +325,9 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
       console.error("Error fetching all group registrations", allGroupRegsErr)
     }
 
+    // Type assertion for all group registrations
+    const typedAllGroupRegs = allGroupRegs as { id: number; agency_name: string }[]
+
     // Group participants - use pagination to get all records
     let allGroupParticipants: any[] = []
     from = 0
@@ -349,7 +352,7 @@ export async function getAllParticipantsAll(): Promise<Participant[]> {
     }
 
     const groupParticipants: Participant[] = allGroupParticipants.map((g) => {
-      const groupReg = allGroupRegs?.find(gr => gr.id === g.group_registration_id)
+      const groupReg = typedAllGroupRegs?.find(gr => gr.id === g.group_registration_id)
       return {
         id: g.id,
         full_name: g.full_name,
