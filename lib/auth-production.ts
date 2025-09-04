@@ -103,7 +103,7 @@ export async function createAdminUser(
       password_hash: hashedPassword,
       field_office_id: fieldOfficeId,
       is_main_admin: isMainAdmin,
-    })
+    } as any)
 
     return !error
   } catch (error) {
