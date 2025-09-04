@@ -39,7 +39,7 @@ export async function authenticateAdminProduction(
       .select("*")
       .eq("username", username)
       .eq("field_office_id", fieldOffice.id)
-      .single()
+      .single() as { data: { id: number; username: string; field_office_id: number; is_main_admin: boolean; password_hash: string } | null; error: any }
 
     if (userError || !adminUser) {
       console.error("Admin user not found:", userError)
