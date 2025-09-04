@@ -33,12 +33,15 @@ export async function authenticateAdminProduction(
       return null
     }
 
+    // Type assertion to ensure fieldOffice has the expected structure
+    const typedFieldOffice = fieldOffice as { id: number; code: string; name: string }
+
     // Get admin user
     const { data: adminUser, error: userError } = await supabase
       .from("admin_users")
       .select("*")
       .eq("username", username)
-      .eq("field_office_id", fieldOffice.id)
+      .eq("field_office_id", typedFieldOffice.id)
       .single()
 
     if (userError || !adminUser) {
@@ -59,8 +62,8 @@ export async function authenticateAdminProduction(
       field_office_id: adminUser.field_office_id,
       is_main_admin: adminUser.is_main_admin,
       field_office: {
-        code: fieldOffice.code,
-        name: fieldOffice.name,
+        code: typedFieldOffice.code,
+        name: typedFieldOffice.name,
       },
     }
   } catch (error) {
