@@ -87,14 +87,12 @@ export async function createAdminUser(
   try {
     const hashedPassword = await hashPassword(password)
 
-        const insertData: Database["public"]["Tables"]["admin_users"]["Insert"][] = [{
+    const { error } = await supabase.from("admin_users").insert({
       username,
       password_hash: hashedPassword,
       field_office_id: fieldOfficeId,
       is_main_admin: isMainAdmin,
-    }]
-
-    const { error } = await supabase.from("admin_users").insert(insertData)
+    } as Database["public"]["Tables"]["admin_users"]["Insert"])
 
     return !error
   } catch (error) {
