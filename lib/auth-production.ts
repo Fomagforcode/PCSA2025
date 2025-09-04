@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase/client"
-import { type Database } from "@/lib/supabase/database.types"
 import bcrypt from "bcryptjs"
 
 export interface AdminUser {
@@ -27,7 +26,7 @@ export async function authenticateAdminProduction(
       .from("field_offices")
       .select("id, code, name")
       .eq("code", fieldOfficeCode)
-      .single() as { data: { id: number; code: string; name: string } | null; error: any }
+      .single()
 
     if (officeError || !fieldOffice) {
       console.error("Field office not found:", officeError)
@@ -40,7 +39,7 @@ export async function authenticateAdminProduction(
       .select("*")
       .eq("username", username)
       .eq("field_office_id", fieldOffice.id)
-      .single() as { data: { id: number; username: string; field_office_id: number; is_main_admin: boolean; password_hash: string } | null; error: any }
+      .single()
 
     if (userError || !adminUser) {
       console.error("Admin user not found:", userError)
@@ -87,9 +86,7 @@ export async function createAdminUser(
   try {
     const hashedPassword = await hashPassword(password)
 
-    const { error } = await supabase
-      .from("admin_users")
-      .insert<Database["public"]["Tables"]["admin_users"]["Insert"]>({
+    const { error } = await supabase.from("admin_users").insert({
       username,
       password_hash: hashedPassword,
       field_office_id: fieldOfficeId,
