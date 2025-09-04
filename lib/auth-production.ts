@@ -98,12 +98,17 @@ export async function createAdminUser(
   try {
     const hashedPassword = await hashPassword(password)
 
-    const { error } = await (supabase.from("admin_users") as any).insert({
-      username,
+    // Create the insert data object
+    const insertData = {
+      username: username,
       password_hash: hashedPassword,
       field_office_id: fieldOfficeId,
       is_main_admin: isMainAdmin,
-    })
+    }
+
+    // Use explicit any casting to bypass TypeScript issues
+    const supabaseClient = supabase as any
+    const { error } = await supabaseClient.from("admin_users").insert(insertData)
 
     return !error
   } catch (error) {
